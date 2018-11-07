@@ -45,13 +45,13 @@ def get_kwargs_and_encoder(kwargs):
         return kwargs, SafeSnekJSONEncoder
     return kwargs, SnekJSONEncoder
 
-def dump(*args, **kwargs):
+def dump(obj, *args, **kwargs):
     kwargs, encoder = get_kwargs_and_encoder(kwargs)
-    return json.dump(cls=encoder, *args, **kwargs)
+    return json.dump(make_json_safe(obj), cls=encoder, *args, **kwargs)
 
-def dumps(*args, **kwargs):
+def dumps(obj, *args, **kwargs):
     kwargs, encoder = get_kwargs_and_encoder(kwargs)
-    return json.dumps(cls=encoder, *args, **kwargs)
+    return json.dumps(make_json_safe(obj), cls=encoder, *args, **kwargs)
 
 def dumpf(obj, filename, *args, **kwargs):
     with open(filename, "w") as f:
@@ -108,3 +108,25 @@ def deepload(s):
     if isinstance(s, dict):
         s = {k:deepload(s[k]) for k in s}
     return s
+
+def make_json_safe(item):
+    if isinstance(item, list):
+        item = [make_json_safe(e) for e in item]
+    if isinstance(item, dict):
+        item = {k:make_json_safe(item[k]) for k in item}
+    if isinstance(item, Decimal):
+        item = float(item)
+    return item
+
+def make_ddb_safe(item):
+    if isinstance(item, list):
+        item = [make_ddb_safe(e) for e in item]
+    if isinstance(item, dict):
+        item = {k:make_ddb_safe(item[k]) for k in item}
+    if isinstance(item, float):
+        item = Decimal(item)
+    if item is None:
+        item = "null"
+    if item == "":
+        item = json.dumps("")
+    return item

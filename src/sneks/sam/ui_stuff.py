@@ -11,6 +11,9 @@ import traceback
 
 env = Environment(loader=FileSystemLoader(os.path.join(os.environ["LAMBDA_TASK_ROOT"], "jinja_templates")))
 
+def add_jinja_filter(name, func):
+    env.filters[name] = func
+
 conf_files = ["static_config.json", "extra_params.json"]
 for filename in conf_files:
     try:
