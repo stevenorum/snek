@@ -1,14 +1,17 @@
+from bs4 import BeautifulSoup
 import copy
 import json
 import re
 from urllib.parse import urlencode, urlparse, parse_qs
 
-def make_response(body, code=200, headers={}, base64=False):
+def make_response(body, code=200, headers={}, base64=False, prettify_html=True):
     _headers = {"Content-Type": "text/html"}
     if isinstance(body, (list,dict)):
         body = json.dumps(body)
         _headers = {"Content-Type": "application/json"}
     _headers.update(headers)
+    if prettify_html and _headers["Content-Type"] == "text/html":
+        body = BeautifulSoup(body).prettify()
     return {
         "body": body,
         "statusCode": code,

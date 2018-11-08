@@ -4,7 +4,7 @@ from setuptools import setup
 
 MAJOR_VERSION='0'
 MINOR_VERSION='0'
-PATCH_VERSION='4'
+PATCH_VERSION='5'
 
 VERSION = "{}.{}.{}".format(MAJOR_VERSION, MINOR_VERSION, PATCH_VERSION)
 
@@ -24,6 +24,9 @@ def main():
         download_url = 'https://github.com/stevenorum/sneks/archive/{}.tar.gz'.format(VERSION),
         keywords = ['python'],
         classifiers = [],
+        install_requires=[
+            'beautifulsoup4',
+        ],
         test_suite = 'tests'
     )
 
