@@ -124,7 +124,9 @@ def make_ddb_safe(item):
     if isinstance(item, dict):
         item = {k:make_ddb_safe(item[k]) for k in item}
     if isinstance(item, float):
-        item = Decimal(item)
+        # Python floats only store 53 bits (~15.95 decimal places) of precision, while Decimals are lossless.
+        # In order to not store a bunch of useless noise, strip down to just 15 decimal places.
+        item = Decimal(format(item, '.15g').rstrip('0'))
     if item is None:
         item = "null"
     if item == "":

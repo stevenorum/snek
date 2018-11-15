@@ -10,7 +10,7 @@ def make_response(body, code=200, headers={}, base64=False, prettify_html=True):
         body = json.dumps(body)
         _headers = {"Content-Type": "application/json"}
     _headers.update(headers)
-    if prettify_html and _headers["Content-Type"] == "text/html":
+    if prettify_html and _headers.get("Content-Type") == "text/html":
         body = BeautifulSoup(body).prettify()
     return {
         "body": body,
