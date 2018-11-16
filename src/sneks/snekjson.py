@@ -1,5 +1,6 @@
 import json
 from decimal import Decimal
+import traceback
 
 class blob(dict):
     def __init__(self, *args, **kwargs):
@@ -69,36 +70,8 @@ def loadf(filename, *args, **kwargs):
     with open(filename, "r") as f:
         return json.load(f, *args, **kwargs)
 
-def make_json_safe(item):
-    '''
-    Basically, undo certain parts of make_ddb_safe.
-    '''
-    if isinstance(item, list):
-        item = [make_json_safe(e) for e in item]
-    if isinstance(item, dict):
-        item = {k:make_json_safe(item[k]) for k in item}
-    if isinstance(item, Decimal):
-        item = float(item)
-    return item
-
-def make_ddb_safe(item):
-    '''
-    Fix several data types that DynamoDB doesn't like.
-    '''
-    if isinstance(item, list):
-        item = [make_ddb_safe(e) for e in item]
-    if isinstance(item, dict):
-        item = {k:make_ddb_safe(item[k]) for k in item}
-    if isinstance(item, float):
-        item = Decimal(item)
-    if item is None:
-        item = "null"
-    if item == "":
-        item = json.dumps("")
-    return item
-
 def deepload(s):
-    while True:
+    while isinstance(s, str):
         try:
             s = loads(s)
         except:
