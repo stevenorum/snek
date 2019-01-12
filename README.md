@@ -1,2 +1,2 @@
-# snek
+# sneks
 Random python utilities.
