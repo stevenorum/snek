@@ -5,7 +5,7 @@ from setuptools import setup
 
 MAJOR_VERSION='0'
 MINOR_VERSION='0'
-PATCH_VERSION='9'
+PATCH_VERSION='10'
 
 VERSION = "{}.{}.{}".format(MAJOR_VERSION, MINOR_VERSION, PATCH_VERSION)
 
@@ -31,6 +31,7 @@ def main():
         classifiers = [],
         install_requires=[
             'beautifulsoup4',
+            'boto3'
         ],
         scripts = scripts,
         test_suite = 'tests'

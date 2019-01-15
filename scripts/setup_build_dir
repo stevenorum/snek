@@ -2,8 +2,6 @@
 
 # Copy everything over to the build/ directory so it can be bundled up.
 
-SCRIPTS="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
-
 if [ -e build ] ; then
     rm -rf build/
 fi
@@ -16,8 +14,12 @@ cp -r src/* build/
 # this makes it easier.
 cp SamTemplate.json build/
 
+if [ ! -z "$BUILD_PARAMS" ] ; then
+    echo "$BUILD_PARAMS" > build/extra_params.json
+fi
+
 if [ -e static ] ; then
-    bash ${SCRIPTS}/upload_static_assets.sh build/static_config.json
+    upload_static_assets build/static_config.json
     cp -r static build/
 fi
 

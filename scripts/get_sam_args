@@ -1,0 +1,44 @@
+#!/usr/bin/env python3
+
+import boto3
+import os
+import sys
+
+def get_git_name():
+    here = os.getcwd()
+    subdirs = os.listdir(here)
+    while len(here) > 1 and '.git' not in subdirs:
+        here = os.path.dirname(here)
+        subdirs = os.listdir(here)
+    if '.git' not in subdirs:
+        return None
+    return os.path.basename(here)
+
+args = {}
+
+for arg in sys.argv[1:]:
+    k = arg.split('=')[0]
+    v = '='.join(arg.split('=')[1:])
+    args[k] = v
+
+boto3.setup_default_session(region_name=args.get('region','us-east-1'), profile_name=args.get('profile','default'))
+cf = boto3.client("cloudformation")
+
+repo_name = get_git_name()
+
+stacks = cf.describe_stacks()["Stacks"]
+
+build_stack = [s for s in stacks if s["StackName"].startswith(repo_name + "-build")][0]
+deploy_stack = [s for s in stacks if s["StackName"].startswith(repo_name) and not s["StackName"]==build_stack["StackName"]][0]
+build_outputs = build_stack["Outputs"]
+build_outputs = {x['OutputKey']:x['OutputValue'] for x in build_outputs}
+
+variables = {
+    'S3_BUCKET':build_outputs['ArtifactBucket'],
+    'STATIC_BUCKET':build_outputs['StaticAssetBucket'],
+    'AWS_PROFILE':args.get('profile','default'),
+    'AWS_REGION':args.get('region','us-east-1'),
+    'STACK_NAME':deploy_stack['StackName']
+}
+for k in variables:
+    print("export {}='{}'".format(k, variables[k]))

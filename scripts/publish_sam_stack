@@ -1,0 +1,31 @@
+#!/bin/bash
+
+abort() {
+    echo "$@"
+    exit 1
+}
+
+if [ -f sneks.conf ] ; then
+    source sneks.conf
+fi
+
+if [ -z "$AWS_PROFILE" ] ; then
+    $AWS_PROFILE="default"
+fi
+
+if [ -z "$AWS_REGION" ] ; then
+    $AWS_REGION="us-east-1"
+fi
+
+eval `get_sam_args region=$AWS_REGION profile=$AWS_PROFILE`
+
+setup_build_dir || abort "'setup_build_dir' failed"
+
+bundle_lambda || abort "'bundle_lambda' failed"
+
+aws --region $AWS_REGION --profile $AWS_PROFILE \
+    cloudformation deploy \
+    --template-file NewSamTemplate.json \
+    --capabilities CAPABILITY_IAM \
+    --stack-name $STACK_NAME || \
+    abort "'aws cloudformation deploy' failed.  You can view the events with 'aws --region $AWS_REGION --profile $AWS_PROFILE cloudformation describe-stack-events --stack-name $STACK_NAME | less'"

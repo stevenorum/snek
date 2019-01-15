@@ -1,7 +1,12 @@
 #!/bin/bash
 
 if [ -z "$MD5CMD" ] ; then
-    MD5CMD="md5sum"
+    # This is OSX's version.
+    MD5CMD="$(which md5)"
+fi
+if [ -z "$MD5CMD" ] ; then
+    # This is RHEL's version.
+    MD5CMD="/usr/bin/md5sum"
 fi
 
 hash_everything() {
