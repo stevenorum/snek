@@ -1,15 +1,20 @@
 #!/usr/bin/env python3
 
+import os
 from setuptools import setup
 
 MAJOR_VERSION='0'
 MINOR_VERSION='0'
-PATCH_VERSION='7'
+PATCH_VERSION='8'
 
 VERSION = "{}.{}.{}".format(MAJOR_VERSION, MINOR_VERSION, PATCH_VERSION)
 
 packages = ['sneks','sneks.sam']
 package_dir = {p: 'src/' + p.replace('.','/') for p in packages}
+
+scriptdir = "scripts"
+script_files = [os.path.join(scriptdir, f) for f in os.listdir(scriptdir) if f[-1] not in "~#" and f[0] not in "~#."]
+scripts = [f for f in script_files if os.access(f, os.X_OK)]
 
 def main():
     setup(
@@ -27,6 +32,7 @@ def main():
         install_requires=[
             'beautifulsoup4',
         ],
+        scripts = scripts,
         test_suite = 'tests'
     )
 
