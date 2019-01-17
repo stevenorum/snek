@@ -5,19 +5,21 @@ abort() {
     exit 1
 }
 
-if [ -f sneks.conf ] ; then
-    source sneks.conf
+CONFFILE="$1"
+
+if [ ! -z "$CONFFILE"] && [ ! -f "$CONFFILE" ] ; then
+    echo "Config file $CONFFILE not found!"
 fi
 
-if [ -z "$AWS_PROFILE" ] ; then
-    $AWS_PROFILE="default"
+if [ -z "$CONFFILE" ] ; then
+    CONFFILE="sneks.json"
 fi
 
-if [ -z "$AWS_REGION" ] ; then
-    $AWS_REGION="us-east-1"
+if [ -f "$CONFFILE" ] ; then
+    eval `get_sam_args -f sneks.json`
+else
+    eval `get_sam_args`
 fi
-
-eval `get_sam_args region=$AWS_REGION profile=$AWS_PROFILE`
 
 setup_build_dir || abort "'setup_build_dir' failed"
 
