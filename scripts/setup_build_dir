@@ -1,32 +1,9 @@
 #!/bin/bash
 
-# Copy everything over to the build/ directory so it can be bundled up.
+MYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+FNAME="$(basename "${BASH_SOURCE[0]}")"
+NEW_FNAME="${FNAME//_/-}"
 
-if [ -e build ] ; then
-    rm -rf build/
-fi
-mkdir -p build
+echo "Warning: Script ${FNAME} has been deprecated in favor of 'sneks ${NEW_FNAME}' and will stop working at some point, likely without further warning." 1>&2
 
-cp -r src/* build/
-
-# Not required that we copy this over,
-# but if you have to later debug it from the source bundle,
-# this makes it easier.
-cp SamTemplate.json build/
-
-if [ ! -z "$BUILD_PARAMS" ] ; then
-    echo "$BUILD_PARAMS" > build/extra_params.json
-fi
-
-if [ -e static ] ; then
-    upload_static_assets build/static_config.json
-    cp -r static build/
-fi
-
-if [ -e jinja_templates ] ; then
-    cp -r jinja_templates build/
-fi
-
-if [ -e requirements.txt ] ; then
-    pip3 install -t build/ -r requirements.txt
-fi
+${MYDIR}/sneks ${NEW_FNAME} $@

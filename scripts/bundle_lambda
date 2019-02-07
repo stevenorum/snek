@@ -1,6 +1,9 @@
 #!/bin/bash
 
-# Once the code and all that is in the build/ directory,
-# process the template and get it ready for deployment.
+MYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+FNAME="$(basename "${BASH_SOURCE[0]}")"
+NEW_FNAME="${FNAME//_/-}"
 
-aws cloudformation package --template-file SamTemplate.json --s3-bucket $S3_BUCKET --output-template-file NewSamTemplate.json --use-json
+echo "Warning: Script ${FNAME} has been deprecated in favor of 'sneks ${NEW_FNAME}' and will stop working at some point, likely without further warning." 1>&2
+
+${MYDIR}/sneks ${NEW_FNAME} $@

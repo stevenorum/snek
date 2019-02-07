@@ -1,18 +1,9 @@
-#!/usr/bin/env python3
+#!/bin/bash
 
-from sneks.config import SneksParser
-import json
+MYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+FNAME="$(basename "${BASH_SOURCE[0]}")"
+NEW_FNAME="${FNAME//_/-}"
 
-def main():
-    args = SneksParser().parse_args()
-    conf = args.sneks_config
-    lines = []
-    for k in conf:
-        val = conf[k]
-        if isinstance(val, (list, dict)):
-            val = json.dumps(val, sort_keys=True)
-        lines.append('export {}={}'.format(k, json.dumps(val)))
-    print("\n".join(lines))
+echo "Warning: Script ${FNAME} has been deprecated in favor of 'sneks ${NEW_FNAME}' and will stop working at some point, likely without further warning." 1>&2
 
-if __name__ == "__main__":
-    main()
+${MYDIR}/sneks ${NEW_FNAME} $@

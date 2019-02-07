@@ -103,6 +103,8 @@ def loader_for(template_name):
             params = func(event, *args, **kwargs)
             if is_response(params):
                 return params
+            if "this_page" not in params:
+                params["this_page"] = template_name
             return get_page(template_name, event, **params)
         update_wrapper(newfunc, func)
         return newfunc

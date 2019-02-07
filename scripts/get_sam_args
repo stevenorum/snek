@@ -1,23 +1,9 @@
-#!/usr/bin/env python3
+#!/bin/bash
 
-from sneks.config import load_stack_info, SneksParser
+MYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+FNAME="$(basename "${BASH_SOURCE[0]}")"
+NEW_FNAME="${FNAME//_/-}"
 
-def main():
-    args = SneksParser().parse_args().sneks_config
+echo "Warning: Script ${FNAME} has been deprecated in favor of 'sneks ${NEW_FNAME}' and will stop working at some point, likely without further warning." 1>&2
 
-    stack_info = load_stack_info()
-    build_outputs = stack_info["build_stack_outputs"]
-    deploy_stack_name = stack_info["deploy_stack_name"]
-
-    variables = {
-        'S3_BUCKET':build_outputs['ArtifactBucket'],
-        'STATIC_BUCKET':build_outputs['StaticAssetBucket'],
-        'AWS_PROFILE':args.get('AWS_PROFILE','default'),
-        'AWS_REGION':args.get('AWS_REGION','us-east-1'),
-        'STACK_NAME':deploy_stack_name
-    }
-    for k in variables:
-        print("export {}='{}'".format(k, variables[k]))
-
-if __name__ == "__main__":
-    main()
+${MYDIR}/sneks ${NEW_FNAME} $@

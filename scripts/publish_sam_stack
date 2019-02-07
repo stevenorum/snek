@@ -1,33 +1,9 @@
 #!/bin/bash
 
-abort() {
-    echo "$@"
-    exit 1
-}
+MYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+FNAME="$(basename "${BASH_SOURCE[0]}")"
+NEW_FNAME="${FNAME//_/-}"
 
-CONFFILE="$1"
+echo "Warning: Script ${FNAME} has been deprecated in favor of 'sneks ${NEW_FNAME}' and will stop working at some point, likely without further warning." 1>&2
 
-if [ ! -z "$CONFFILE"] && [ ! -f "$CONFFILE" ] ; then
-    echo "Config file $CONFFILE not found!"
-fi
-
-if [ -z "$CONFFILE" ] ; then
-    CONFFILE="sneks.json"
-fi
-
-if [ -f "$CONFFILE" ] ; then
-    eval `get_sam_args -f sneks.json`
-else
-    eval `get_sam_args`
-fi
-
-setup_build_dir || abort "'setup_build_dir' failed"
-
-bundle_lambda || abort "'bundle_lambda' failed"
-
-aws --region $AWS_REGION --profile $AWS_PROFILE \
-    cloudformation deploy \
-    --template-file NewSamTemplate.json \
-    --capabilities CAPABILITY_IAM \
-    --stack-name $STACK_NAME || \
-    abort "'aws cloudformation deploy' failed.  You can view the events with 'aws --region $AWS_REGION --profile $AWS_PROFILE cloudformation describe-stack-events --stack-name $STACK_NAME | less'"
+${MYDIR}/sneks ${NEW_FNAME} $@

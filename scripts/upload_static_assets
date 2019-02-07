@@ -1,28 +1,9 @@
 #!/bin/bash
 
-if [ -z "$MD5CMD" ] ; then
-    # This is OSX's version.
-    MD5CMD="$(which md5)"
-fi
-if [ -z "$MD5CMD" ] ; then
-    # This is RHEL's version.
-    MD5CMD="/usr/bin/md5sum"
-fi
+MYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+FNAME="$(basename "${BASH_SOURCE[0]}")"
+NEW_FNAME="${FNAME//_/-}"
 
-hash_everything() {
-    find static/* | sort | while read fname ; do
-        cat $fname | $MD5CMD | grep -o "[0-9a-f]{32}"
-    done
-}
+echo "Warning: Script ${FNAME} has been deprecated in favor of 'sneks ${NEW_FNAME}' and will stop working at some point, likely without further warning." 1>&2
 
-CHECKSUM=$(hash_everything | $MD5CMD | grep -o "[0-9a-f]\{32\}")
-echo "Checksum: '$CHECKSUM'"
-
-if [ -z "$AWS_PROFILE" ] ; then
-    aws s3 sync static s3://$STATIC_BUCKET/$CHECKSUM/static
-else
-    aws --profile $AWS_PROFILE s3 sync static s3://$STATIC_BUCKET/$CHECKSUM/static
-fi
-echo "{\"STATIC_BUCKET\":\"$STATIC_BUCKET\",\"STATIC_PATH\":\"$CHECKSUM\"}"
-
-echo "{\"STATIC_BUCKET\":\"$STATIC_BUCKET\",\"STATIC_PATH\":\"$CHECKSUM\"}" > "$1"
+${MYDIR}/sneks ${NEW_FNAME} $@
