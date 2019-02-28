@@ -76,7 +76,7 @@ def get_params(template_name, event=None, **kwargs):
 
 def get_page(template_name, event=None, **kwargs):
     try:
-        return make_response(env.get_template(template_name).render(**get_params(template_name, event, this_page=template_name, **kwargs)))
+        return make_response(env.get_template(template_name).render(**get_params(template_name, event, **kwargs)))
     except TemplateNotFound as e:
         traceback.print_exc()
         print(e)

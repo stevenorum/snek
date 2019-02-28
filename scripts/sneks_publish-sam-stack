@@ -22,7 +22,7 @@ else
 fi
 
 setup_build_dir || abort "'setup_build_dir' failed"
-
+echo "$BUILD_PARAMS" > build/extra_params.json
 bundle_lambda || abort "'bundle_lambda' failed"
 
 aws --region $AWS_REGION --profile $AWS_PROFILE \

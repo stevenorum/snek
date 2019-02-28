@@ -49,6 +49,6 @@ def load_stack_info():
         "deploy_stack_name":deploy_stack_name,
         "build_stack":build_stack,
         "deploy_stack":deploy_stack,
-        "build_stack_outputs":{x['OutputKey']:x['OutputValue'] for x in build_stack["Outputs"]},
-        "deploy_stack_outputs":{x['OutputKey']:x['OutputValue'] for x in deploy_stack["Outputs"]},
+        "build_stack_outputs":{x['OutputKey']:x['OutputValue'] for x in build_stack.get("Outputs",[])},
+        "deploy_stack_outputs":{x['OutputKey']:x['OutputValue'] for x in deploy_stack.get("Outputs",[])},
     }
