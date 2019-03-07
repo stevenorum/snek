@@ -19,7 +19,7 @@ if [ ! -z "$BUILD_PARAMS" ] ; then
 fi
 
 if [ -e static ] ; then
-    upload_static_assets build/static_config.json
+    sneks upload-static-assets build/static_config.json
     cp -r static build/
 fi
 
@@ -28,5 +28,5 @@ if [ -e jinja_templates ] ; then
 fi
 
 if [ -e requirements.txt ] ; then
-    pip3 install -t build/ -r requirements.txt
+    pip3 install --no-cache-dir -t build/ -r requirements.txt
 fi

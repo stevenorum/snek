@@ -31,7 +31,8 @@ def main():
         classifiers = [],
         install_requires=[
             'beautifulsoup4',
-            'boto3'
+            'boto3',
+            'jinja2'
         ],
         scripts = scripts,
         test_suite = 'tests'
