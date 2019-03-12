@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import json
+
 from sneks.config import load_stack_info, SneksParser
 
 def main():
@@ -16,6 +18,8 @@ def main():
         'AWS_REGION':args.get('AWS_REGION','us-east-1'),
         'STACK_NAME':deploy_stack_name
     }
+    if "BUILD_PARAMS" in args:
+        variables["BUILD_PARAMS"] = json.dumps(args["BUILD_PARAMS"], sort_keys=True)
     for k in variables:
         print("export {}='{}'".format(k, variables[k]))
 
