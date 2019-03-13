@@ -106,3 +106,20 @@ class ResponseException(Exception):
 class ApiException(ResponseException):
     def __init__(self, data={}, code=500):
         self.response = make_response(body=data, code=code)
+
+MATCHERS = {}
+
+def register_path_matcher(chain_name, *args, **kwargs):
+    global MATCHERS
+    MATCHERS[chain_name] = MATCHERS.get(chain_name, [])
+    MATCHERS[chain_name].append((args, kwargs))
+
+def get_matchers(chain_name, **kwargs):
+    global MATCHERS
+    matchers = []
+    for link in MATCHERS.get(chain_name, []):
+        _args = link[0]
+        _kwargs = copy.deepcopy(kwargs)
+        _kwargs.update(link[1])
+        matchers.append(PathMatcher(*_args, **_kwargs))
+    return matchers

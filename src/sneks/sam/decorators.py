@@ -13,3 +13,9 @@ def returns_json(func):
         return response_core.make_response(body=json.dumps(response, separators=(',',':')), headers = {"Content-Type": "application/json"})
     update_wrapper(newfunc, func)
     return newfunc
+
+def register_path(chain_name, path_re, *args, **kwargs):
+    def newfunc(func):
+        response_core.register_path_matcher(chain_name, path_re, func, *args, **kwargs)
+        return func
+    return newfunc

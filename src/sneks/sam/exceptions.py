@@ -13,6 +13,24 @@ class HTTPException(ResponseException):
         response = make_response(body=body, code=code, headers=headers)
         raise ResponseException(response)
 
+class HTTPRedirect(HTTPException):
+    CODE = 307
+    BODY = ""
+
+    @classmethod
+    def throw(cls, target_url, body="", headers={}):
+        _headers = {"Location": target_url}
+        body = body if body else cls.BODY
+        _headers.update(headers)
+        response = make_response(body=body, code=code, headers=_headers)
+        raise ResponseException(response)
+
+class HTTPTemporaryRedirect(HTTPRedirect):
+    pass
+
+class HTTPPermanentRedirect(HTTPRedirect):
+    CODE = 308
+
 class HTTP400(HTTPException):
     CODE = 400
     BODY = "No can do, buddy."
