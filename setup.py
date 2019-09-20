@@ -5,11 +5,11 @@ from setuptools import setup
 
 MAJOR_VERSION='0'
 MINOR_VERSION='0'
-PATCH_VERSION='17'
+PATCH_VERSION='18'
 
 VERSION = "{}.{}.{}".format(MAJOR_VERSION, MINOR_VERSION, PATCH_VERSION)
 
-packages = ['sneks','sneks.sam']
+packages = ['sneks','sneks.sam','sneks.ddb']
 package_dir = {p: 'src/' + p.replace('.','/') for p in packages}
 
 scriptdir = "scripts"
