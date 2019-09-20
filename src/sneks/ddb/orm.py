@@ -335,7 +335,7 @@ class DynamoObject(BaseDynamoObject):
         if not save_if_missing and not save_if_existing:
             raise RuntimeError("At least one of save_if_missing and save_if_existing must be true.")
 
-        old_version = self.get(VERSION_KEY, -1)
+        old_version = decimal.Decimal(self.get(VERSION_KEY, -1))
         create_condition = Attr(VERSION_KEY).not_exists()
         if force:
             update_condition = Attr(VERSION_KEY).exists()
