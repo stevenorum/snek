@@ -10,13 +10,15 @@ def main():
     stack_info = load_stack_info()
     build_outputs = stack_info["build_stack_outputs"]
     deploy_stack_name = stack_info["deploy_stack_name"]
+    build_stack_name = stack_info["build_stack_name"]
 
     variables = {
         'S3_BUCKET':build_outputs['ArtifactBucket'],
         'STATIC_BUCKET':build_outputs['StaticAssetBucket'],
         'AWS_PROFILE':args.get('AWS_PROFILE','default'),
         'AWS_REGION':args.get('AWS_REGION','us-east-1'),
-        'STACK_NAME':deploy_stack_name
+        'STACK_NAME':deploy_stack_name,
+        'BUILD_STACK_NAME':build_stack_name
     }
     if "BUILD_PARAMS" in args:
         variables["BUILD_PARAMS"] = json.dumps(args["BUILD_PARAMS"], sort_keys=True)

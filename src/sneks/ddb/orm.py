@@ -13,6 +13,7 @@ import inspect
 import json
 import logging
 import os
+import random
 import traceback
 
 VERSION_KEY = '__version__'
@@ -24,18 +25,27 @@ _TRACE_LEVEL = 1
 def _TRACE(msg, *args, **kwargs):
     return logger.log(_TRACE_LEVEL, msg, *args, **kwargs)
 
-def ensure_ddbsafe(d):
-    ts = TypeSerializer()
+def DECIMAL(*args, **kwargs):
+    d = decimal.Decimal(*args, **kwargs)
+    decimal.getcontext().clear_flags()
+    return d
+
+def _ensure_ddbsafe(d):
     if isinstance(d, dict):
-        return {k:ensure_ddbsafe(d[k]) for k in d}
+        return {k:_ensure_ddbsafe(d[k]) for k in d}
     elif isinstance(d, list):
-        return [ensure_ddbsafe(e) for e in d]
-    elif isinstance(d, float):
-        return decimal.Decimal(d)
+        return [_ensure_ddbsafe(e) for e in d]
+    elif isinstance(d, decimal.Decimal):
+        return float(d)
     elif isinstance(d, datetime):
         return d.strftime(DATETIME_FORMAT)
+    elif isinstance(d, str) and "" == d:
+        return None
     else:
         return d
+
+def ensure_ddbsafe(d):
+    return json.loads(json.dumps(_ensure_ddbsafe(d)), parse_float=decimal.Decimal)
 
 def _fix_types(d):
     if isinstance(d, dict):
@@ -104,6 +114,8 @@ class BaseDynamoObject(dict):
     @classmethod
     def _preprocess_search_params(cls, **kwargs):
         params = dict(kwargs)
+        if params.get("ShufflePages", None):
+            del params["ShufflePages"]
         if params.get("PageSize", None):
             if not params.get("Limit", None):
                 params["Limit"] = params["PageSize"]
@@ -149,6 +161,8 @@ class BaseDynamoObject(dict):
     def _postprocess_search_results(cls, results):
         response = {
             "Items":cls._parse_items(results),
+            "Count":results.get("Count",0),
+            "ScannedCount":results.get("ScannedCount",0),
             "NextToken":None,
             "RawResponse":results
         }
@@ -174,9 +188,13 @@ class BaseDynamoObject(dict):
         max_results = kwargs.get("MaxResults", -1)
         item_count = 0
         finished = False
+        shuffle_pages = kwargs.get("ShufflePages", False)
         response = func(**kwargs)
         while response and not finished:
-            for item in response.get("Items"):
+            items = response.get("Items")
+            if shuffle_pages:
+                random.shuffle(items)
+            for item in items:
                 if finished:
                     break
                 item_count += 1
@@ -203,6 +221,30 @@ class BaseDynamoObject(dict):
     @classmethod
     def query_all(cls, **kwargs):
         return cls._autopaginate_search(cls.query, **kwargs)
+
+    @classmethod
+    def count(cls, **kwargs):
+        kwargs["Select"] = "COUNT"
+        params = cls._preprocess_search_params(**kwargs)
+        results = cls.TABLE().query(**params)
+        return cls._postprocess_search_results(results)
+
+    @classmethod
+    def count_all(cls, **kwargs):
+        response = cls.count(**kwargs)
+        item_count = 0
+        scanned_count = 0
+        while response:
+            item_count += response.get("Count",0)
+            scanned_count += response.get("ScannedCount",0)
+            if response.get("NextToken"):
+                response = cls.count(NextToken=response.get("NextToken"), **kwargs)
+            else:
+                response = None
+        return {
+            "Count": item_count,
+            "ScannedCount": scanned_count
+        }
 
     @classmethod
     def load(cls, **kwargs):
@@ -335,7 +377,7 @@ class DynamoObject(BaseDynamoObject):
         if not save_if_missing and not save_if_existing:
             raise RuntimeError("At least one of save_if_missing and save_if_existing must be true.")
 
-        old_version = decimal.Decimal(self.get(VERSION_KEY, -1))
+        old_version = DECIMAL(self.get(VERSION_KEY, -1))
         create_condition = Attr(VERSION_KEY).not_exists()
         if force:
             update_condition = Attr(VERSION_KEY).exists()
@@ -564,7 +606,7 @@ class DataField(object):
             value=value
         )
 
-class StructuredObject(dict):
+class StructuredObject(DynamoObject):
     _HIDDEN_KEYS = [VERSION_KEY]
     _DATA_FIELDS = []
 
