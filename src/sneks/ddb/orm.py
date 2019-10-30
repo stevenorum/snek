@@ -407,7 +407,7 @@ class DynamoObject(BaseDynamoObject):
     def modify(self, force=False):
         return self.save(force=force, save_if_existing=True, save_if_missing=False)
 
-    def create(self):
+    def create(self, force=False):
         return self.save(force=force, save_if_existing=False, save_if_missing=True)
 
     def _store(self, CE=None):
