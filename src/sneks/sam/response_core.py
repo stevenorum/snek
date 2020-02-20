@@ -4,6 +4,8 @@ import json
 import re
 from urllib.parse import urlencode, urlparse, parse_qs
 
+from sneks.sam import events
+
 def make_response(body, code=200, headers={}, base64=False, prettify_html=True):
     _headers = {"Content-Type": "text/html"}
     if isinstance(body, (list,dict)):
@@ -82,7 +84,7 @@ class PathMatcher(EventMatcher):
         self.matcher = re.compile(regex)
 
     def matcher_function(self, event):
-        path = event.get("path")
+        path = events.page_path(event)
         response = self.matcher.match(path)
         if response:
             return (True, response.groupdict())

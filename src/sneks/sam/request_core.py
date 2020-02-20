@@ -4,6 +4,7 @@ import os
 import urllib.parse
 import traceback
 from functools import update_wrapper
+from sneks.sam import events
 
 def listify(obj):
     if obj == None:
@@ -85,7 +86,8 @@ def add_event_params(event, *args, **kwargs):
     params["cookies"] = cookie_dict
     params["path"] = {}
     params["path"]["raw"] = event["path"]
-    params["path"]["base"] = event["requestContext"]["path"][:-1*len(event["path"])].rstrip("/")
+    params["path"]["base"] = events.base_path(event)
+    params["path"]["page"] = events.page_path(event)
     params["path"]["full"] = "https://" + event["headers"]["Host"] + params["path"]["raw"]
     params["path"]["full_base"] = "https://" + event["headers"]["Host"] + params["path"]["base"]
     if "STATIC_BUCKET" in os.environ and "STATIC_PATH" in os.environ:

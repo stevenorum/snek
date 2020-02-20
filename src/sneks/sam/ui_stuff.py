@@ -4,6 +4,7 @@ import os
 from functools import update_wrapper
 from jinja2 import Environment, FileSystemLoader
 from jinja2.exceptions import TemplateNotFound
+from sneks.sam.request_core import add_event_params
 from sneks.sam.response_core import make_response, redirect, ResponseException
 from sneks.sam import events
 from sneks import snekjson
@@ -135,6 +136,10 @@ def get_static(filename, event=None, **kwargs):
 
 def get_debug_blob(event):
     templates = env.list_templates()
+    event = add_event_params(event)
+    event["debug"] = {}
+    event["debug"]["events.base_path(event)"] = events.base_path(event)
+    event["debug"]["events.page_path(event)"] = events.page_path(event)
     return "<pre>\n{}\n\nAvailable Jinja2 templates:\n\n{}\n</pre>".format(snekjson.dumps(event, indent=2, sort_keys=True, ignore_type_error=True).replace(">","&gt").replace("<","&lt"),"\n".join(templates))
 
 def make_debug(event=None, context=None, headers={}, **kwargs):

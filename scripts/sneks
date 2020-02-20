@@ -1,5 +1,12 @@
 #!/bin/bash
 
 MYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-
-$MYDIR/sneks_$@
+scriptname="$MYDIR/sneks_${1}"
+if [ -f "$scriptname" ]; then
+    $MYDIR/sneks_$@
+else
+    echo "${1} isn't a valid subcommand for sneks.  The following are:"
+    for filename in $MYDIR/sneks_*; do
+        echo ${filename##*sneks_}
+    done
+fi
