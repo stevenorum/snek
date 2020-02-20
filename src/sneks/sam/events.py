@@ -21,9 +21,9 @@ def base_path(event):
 
 def page_path(event):
     if event.get("pathParameters") and event["pathParameters"].get("proxy"):
-        return event["pathParameters"]["proxy"].rstrip("/")
+        return "/" + event["pathParameters"]["proxy"].strip("/")
     else:
-        return ""
+        return "/"
 
 def domain(event, prefix="https://"):
     if not event:
