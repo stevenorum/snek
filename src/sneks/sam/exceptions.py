@@ -22,7 +22,7 @@ class HTTPRedirect(HTTPException):
         _headers = {"Location": target_url}
         body = body if body else cls.BODY
         _headers.update(headers)
-        response = make_response(body=body, code=code, headers=_headers)
+        response = make_response(body=body, code=cls.CODE, headers=_headers)
         raise ResponseException(response)
 
 class HTTPTemporaryRedirect(HTTPRedirect):

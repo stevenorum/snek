@@ -1,16 +1,39 @@
+from base64 import b64encode
+import boto3
 from bs4 import BeautifulSoup
 import copy
 import json
 import re
+import traceback
 from urllib.parse import urlencode, urlparse, parse_qs
 
 from sneks.sam import events
 
-def make_response(body, code=200, headers={}, base64=False, prettify_html=True):
+TEXT_MIME_TYPES = [
+    "text/plain",
+    "text/css",
+    "text/html",
+    "application/javascript",
+    "image/svg+xml",
+    "application/json",
+    "text/xml",
+    "application/xml",
+    "application/xhtml+xml",
+]
+
+def make_response(body, code=200, headers={}, base64=None, prettify_html=True):
     _headers = {"Content-Type": "text/html"}
     if isinstance(body, (list,dict)):
         body = json.dumps(body, separators=(',',':'))
         _headers = {"Content-Type": "application/json"}
+    if None == base64 and isinstance(body, (bytes,bytearray)):
+        ct = headers.get("Content-Type","")
+        if "text" in ct or "json" in ct or "xml" in ct:
+            body = body.decode("utf-8")
+            base64 = False
+        else:
+            body = str(b64encode(body))
+            base64 = True
     _headers.update(headers)
     if prettify_html and _headers.get("Content-Type") == "text/html":
         body = BeautifulSoup(body).prettify()
@@ -50,6 +73,41 @@ def redirect(target_url, temporary=True, headers={}, qs={}):
         code = 303 if temporary else 301,
         headers = _headers
     )
+
+def get_bucket_function(bucket_name, bucket_prefix="", bucket_is_public=False):
+    client = boto3.client('s3')
+    def function(event, *args, **kwargs):
+        path = events.page_path(event)
+        if bucket_prefix:
+            path = bucket_prefix.rstrip("/") + "/" + path.lstrip("/")
+        if not path.lower().endswith("html"):
+            obj = client.head_object(Bucket=bucket_name, Key=path)
+            if obj.get("ContentType","") not in TEXT_MIME_TYPES:
+                if bucket_is_public:
+                    url = "https://s3.amazonaws.com/{bucket_name}/{path}".format(bucket_name=bucket_name, path=path)
+                else:
+                    # have to generate a presigned URL instead of the usual public one
+                    url = client.generate_presigned_url(ClientMethod="get_object",Params={"Bucket":bucket_name, "Key":path}, ExpiresIn=3600)
+                return redirect(url)
+        obj = client.get_object(Bucket=bucket_name, Key=path)
+        body = obj["Body"].read()
+        ctype = obj.get("ContentType", "text/html")
+        return make_response(body, code=200, headers={"Content-Type":ctype}, prettify_html=True)
+    return function
+
+def get_bucket_matcher(bucket_name, bucket_prefix=""):
+    client = boto3.client('s3')
+    def function(event, *args, **kwargs):
+        path = events.page_path(event)
+        if bucket_prefix:
+            path = bucket_prefix.rstrip("/") + "/" + path.lstrip("/")
+        try:
+            obj = client.head_object(Bucket=bucket_name, Key=path)
+            return True, {}
+        except:
+            traceback.print_exc()
+            return False, {}
+    return function
 
 class EventMatcher(object):
     def __init__(self, response_function, default_kwargs={}, matcher_function=None, preprocessor_functions=[]):
