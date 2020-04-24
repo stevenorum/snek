@@ -13,7 +13,7 @@ def qsp(event):
 def base_path(event):
     if not event:
         return ""
-    event_path = event.get("path","").rstrip("/")
+    event_path = event.get("requestContext",{}).get("path","").rstrip("/")
     if event.get("pathParameters") and event["pathParameters"].get("proxy"):
         proxy = event["pathParameters"]["proxy"].rstrip("/")
         event_path = event_path[:-1*len(proxy)].rstrip("/")

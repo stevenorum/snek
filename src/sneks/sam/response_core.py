@@ -36,7 +36,7 @@ def make_response(body, code=200, headers={}, base64=None, prettify_html=True):
             base64 = True
     _headers.update(headers)
     if prettify_html and _headers.get("Content-Type") == "text/html":
-        body = BeautifulSoup(body).prettify()
+        body = BeautifulSoup(body, features="html.parser").prettify()
     return {
         "body": body,
         "statusCode": code,

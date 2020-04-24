@@ -76,7 +76,16 @@ class BaseDynamoObject(dict):
 
     @classmethod
     def _from_dict(cls, d):
+        if isinstance(d, cls):
+            return d
         return cls(d)
+
+    @classmethod
+    def objectify(cls, d):
+        return cls._from_dict(d)
+
+    def dictify(self):
+        return dict(self)
 
     @classmethod
     def _encode_nexttoken(cls, key):
