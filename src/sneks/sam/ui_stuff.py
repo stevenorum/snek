@@ -6,7 +6,7 @@ from jinja2 import Environment, FileSystemLoader
 from jinja2.exceptions import TemplateNotFound
 from sneks.sam.request_core import add_event_params
 from sneks.sam.response_core import make_response, redirect, ResponseException
-from sneks.sam import events
+from sneks.sam import events, response_core
 from sneks import snekjson
 import traceback
 
@@ -96,7 +96,7 @@ def render_page(name, params={}, code=200, headers={}):
     return make_response(body=body, code=code, headers=_headers, is_base64=False)
 
 def is_response(d):
-    return len(d) == 4 and "body" in d and "statusCode" in d and "headers" in d and "isBase64Encoded" in d
+    return len(d) >= 4 and "body" in d and "statusCode" in d and "headers" in d and "isBase64Encoded" in d
 
 def loader_for(template_name):
     def new_decorator(func):
@@ -138,6 +138,7 @@ def get_debug_blob(event):
     templates = env.list_templates()
     event = add_event_params(event)
     event["debug"] = {}
+    event["debug"]["matchers"] = response_core.get_matchers_debug_blob()
     event["debug"]["events.base_path(event)"] = events.base_path(event)
     event["debug"]["events.page_path(event)"] = events.page_path(event)
     return "<pre>\n{}\n\nAvailable Jinja2 templates:\n\n{}\n</pre>".format(snekjson.dumps(event, indent=2, sort_keys=True, ignore_type_error=True).replace(">","&gt").replace("<","&lt"),"\n".join(templates))

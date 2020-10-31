@@ -2,6 +2,7 @@ import http.cookies
 import json
 import os
 import urllib.parse
+import string
 import traceback
 from functools import update_wrapper
 from sneks.sam import events
@@ -111,3 +112,35 @@ def event_params_decorator(func):
         return func(event, *args, **kwargs)
     update_wrapper(newfunc, func)
     return newfunc
+
+def bitmask_string_case(s, n):
+    # This function lets you get a bunch of different casing variations on a string.
+    # This is necessary because API Gateway uses a dict to store the headers, so to set multiple cookies at once,
+    # each one needs to use a different casing of "Set-Cookie" to avoid overwriting each other.
+    s = s.lower()
+    length = len([c for c in s if c in string.ascii_lowercase])
+    mask = "{0:b}".format(n)
+    if len(mask) > length:
+        raise RuntimeError("Binary representation of mask {} is longer than string to be masked '{}'".format(n, s))
+    else:
+        mask = "0"*(length-len(mask)) + mask
+    offset = 0
+    new_s = ""
+    for i in range(len(s)):
+        c = s[i]
+        if c not in string.ascii_lowercase:
+            new_s += c
+            offset += 1
+        else:
+            m = mask[i-offset]
+            print(m)
+            new_s += s[i].upper() if m=="1" else s[i].lower()
+    return new_s
+
+def get_cookie_headers(cookies):
+    headers = {}
+    if len(cookies) > 512:
+        raise RuntimeError("Can only set up to 512 cookies in a single request due to API Gateway being janky.")
+    for i in range(len(cookies)):
+        headers[bitmask_string_case("set-cookie", i)] = cookies[i]
+    return headers

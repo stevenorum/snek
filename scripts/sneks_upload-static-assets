@@ -11,7 +11,7 @@ fi
 
 hash_everything() {
     find static/* | sort | while read fname ; do
-        cat $fname | $MD5CMD | grep -o "[0-9a-f]{32}"
+        cat $fname | $MD5CMD | grep -o "[0-9a-f]\{32\}"
     done
 }
 

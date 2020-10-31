@@ -480,6 +480,8 @@ class CFObject(DynamoObject):
     def _get_stack_name(cls, stack_name=None):
         stack_name = stack_name if stack_name else cls._CF_STACK_NAME
         if not stack_name:
+            if os.environ.get("STACK_NAME"):
+                return os.environ["STACK_NAME"]
             raise RuntimeError("Stack name not set!")
         return stack_name
 
@@ -556,7 +558,7 @@ class CFObject(DynamoObject):
         :rtype: Class that inherits from cls
         '''
         class LazyObject(cls):
-            _CF_STACK_NAME = stack_name if stack_name else cls._CF_STACK_NAME
+            _CF_STACK_NAME = cls._get_stack_name(stack_name)
             _CF_LOGICAL_NAME = logical_name if logical_name else cls._CF_LOGICAL_NAME
             _CLASSNAME = cls.CLASS_NAME()
         return LazyObject

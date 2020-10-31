@@ -183,3 +183,14 @@ def get_matchers(chain_name, **kwargs):
         _kwargs.update(link[1])
         matchers.append(PathMatcher(*_args, **_kwargs))
     return matchers
+
+def get_matchers_debug_blob():
+    global MATCHERS
+    mkeys = list(MATCHERS.keys())
+    blobs = {}
+    for chain_name in mkeys:
+        blob = []
+        for link in MATCHERS.get(chain_name, []):
+            blob.append([str(link[0]), str(link[1])])
+        blobs[chain_name] = blob
+    return blobs
