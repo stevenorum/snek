@@ -96,7 +96,12 @@ def render_page(name, params={}, code=200, headers={}):
     return make_response(body=body, code=code, headers=_headers, is_base64=False)
 
 def is_response(d):
-    return len(d) >= 4 and "body" in d and "statusCode" in d and "headers" in d and "isBase64Encoded" in d
+    try:
+        if isinstance(d, dict):
+            return len(d) >= 4 and "body" in d and "statusCode" in d and "headers" in d and "isBase64Encoded" in d
+    except:
+        pass
+    return False
 
 def loader_for(template_name):
     def new_decorator(func):

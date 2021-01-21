@@ -15,6 +15,15 @@ def returns_json(func):
     update_wrapper(newfunc, func)
     return newfunc
 
+def returns_text(func):
+    def newfunc(event, *args, **kwargs):
+        response = func(event, *args, **kwargs)
+        if ui_stuff.is_response(response):
+            return response
+        return response_core.make_response(body=str(response), headers = {"Content-Type": "text/plain"})
+    update_wrapper(newfunc, func)
+    return newfunc
+
 def register_path(chain_name, path_re, *args, **kwargs):
     def newfunc(func):
         response_core.register_path_matcher(chain_name, path_re, func, *args, **kwargs)

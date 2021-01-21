@@ -188,6 +188,8 @@ class BaseDynamoObject(dict):
             raise RuntimeError("Invalid search operation '{}' specified.".format(func_name))
         params = cls._preprocess_search_params(**kwargs)
         results = getattr(cls.TABLE(),func_name)(**params)
+        if results.get("ConsumedCapacity"):
+            print(json.dumps(results.get("ConsumedCapacity")))
         return cls._postprocess_search_results(results)
 
     @staticmethod
