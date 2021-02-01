@@ -123,6 +123,8 @@ class BaseDynamoObject(dict):
     @classmethod
     def _preprocess_search_params(cls, **kwargs):
         params = dict(kwargs)
+        if "ReturnConsumedCapacity" not in params:
+            params["ReturnConsumedCapacity"] = "TOTAL"
         if params.get("ShufflePages", None):
             del params["ShufflePages"]
         if params.get("PageSize", None):
@@ -175,6 +177,17 @@ class BaseDynamoObject(dict):
             "NextToken":None,
             "RawResponse":results
         }
+        if results.get("ConsumedCapacity"):
+            response["ConsumedCapacity"] = results["ConsumedCapacity"]
+            try:
+                print(json.dumps(results["ConsumedCapacity"]))
+                if not os.environ.get("DDB_READ_CAPACITY_USED", None):
+                    os.environ["DDB_READ_CAPACITY_USED"] = "0"
+                cap_so_far = float(os.environ["DDB_READ_CAPACITY_USED"])
+                cap_so_far += results["ConsumedCapacity"].get("CapacityUnits", 0)
+                os.environ["DDB_READ_CAPACITY_USED"] = str(cap_so_far)
+            except:
+                traceback.print_exc()
         if results.get("LastEvaluatedKey", None):
             response["NextToken"] = cls._encode_nexttoken(results["LastEvaluatedKey"])
         return response
@@ -188,8 +201,6 @@ class BaseDynamoObject(dict):
             raise RuntimeError("Invalid search operation '{}' specified.".format(func_name))
         params = cls._preprocess_search_params(**kwargs)
         results = getattr(cls.TABLE(),func_name)(**params)
-        if results.get("ConsumedCapacity"):
-            print(json.dumps(results.get("ConsumedCapacity")))
         return cls._postprocess_search_results(results)
 
     @staticmethod
