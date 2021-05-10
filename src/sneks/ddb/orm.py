@@ -22,6 +22,10 @@ DATETIME_FORMAT = "datetime:%Y-%m-%dT%H:%M:%S.%fZ"
 
 logger = logging.getLogger(__name__)
 _TRACE_LEVEL = 1
+
+DDB_READ_CALLS = ["get_item","query","scan"]
+DDB_WRITE_CALLS = ["delete_item","put_item","update_item"]
+
 def _TRACE(msg, *args, **kwargs):
     return logger.log(_TRACE_LEVEL, msg, *args, **kwargs)
 
@@ -61,6 +65,70 @@ def _fix_types(d):
             except:
                 pass
     return d
+
+def record_ddb_capacity(capacity_used, action):
+    try:
+        action = action.upper()
+        if action not in ["READ","WRITE"]:
+            _TRACE("Invalid action '{}' provided.".format(action))
+            return
+        env_key = "DDB_{}_CAPACITY_USED".format(action)
+        if not os.environ.get(env_key, None):
+            os.environ[env_key] = "0"
+        cap_so_far = float(os.environ[env_key])
+        cap_so_far += capacity_used
+        os.environ[env_key] = str(cap_so_far)
+    except:
+        traceback.print_exc()
+
+def record_read_capacity(capacity_used):
+    return record_ddb_capacity(capacity_used, "READ")
+
+def record_write_capacity(capacity_used):
+    return record_ddb_capacity(capacity_used, "WRITE")
+
+def record_capacity_from_results(results):
+    record_capacity_from_response(results)
+
+def record_capacity_from_response(response, name=None):
+    try:
+        if response.get("ConsumedCapacity"):
+            tcu = response["ConsumedCapacity"].get("CapacityUnits", 0)
+            rcu = response["ConsumedCapacity"].get("ReadCapacityUnits", 0)
+            wcu = response["ConsumedCapacity"].get("WriteCapacityUnits", 0)
+            if rcu or wcu:
+                record_read_capacity(rcu)
+                record_write_capacity(wcu)
+            elif name in DDB_READ_CALLS:
+                record_read_capacity(tcu)
+            elif name in DDB_WRITE_CALLS:
+                record_write_capacity(tcu)
+            else:
+                _TRACE("Unable to figure out what to do with the capacity info.")
+        else:
+            _TRACE("ConsumedCapacity not found in response.")
+    except:
+        traceback.print_exc()
+
+class SamTable(object):
+    def __init__(self, table):
+        self.table = table
+
+    def _do_stuff(self, *args, _innerfuncname=None, **kwargs):
+        if "ReturnConsumedCapacity" not in kwargs:
+            kwargs["ReturnConsumedCapacity"] = "INDEXES"
+        _innerfunc = getattr(self.table, _innerfuncname)
+        response = _innerfunc(*args, **kwargs)
+        record_capacity_from_response(response, name=_innerfuncname)
+        return response
+
+    def __getattr__(self, name):
+        # Called if the attribute can't be found the normal ways.
+        if name in DDB_READ_CALLS + DDB_WRITE_CALLS:
+            # This is a function that reports the capacity used.
+            # Intercept the call and record that info.
+            return lambda *args, **kwargs: self._do_stuff(*args, _innerfuncname=name, **kwargs)
+        return self.table.__getattr__(name)
 
 class BaseDynamoObject(dict):
     """
@@ -170,6 +238,7 @@ class BaseDynamoObject(dict):
 
     @classmethod
     def _postprocess_search_results(cls, results):
+        # record_read_capacity_from_results(results)
         response = {
             "Items":cls._parse_items(results),
             "Count":results.get("Count",0),
@@ -177,17 +246,6 @@ class BaseDynamoObject(dict):
             "NextToken":None,
             "RawResponse":results
         }
-        if results.get("ConsumedCapacity"):
-            response["ConsumedCapacity"] = results["ConsumedCapacity"]
-            try:
-                print(json.dumps(results["ConsumedCapacity"]))
-                if not os.environ.get("DDB_READ_CAPACITY_USED", None):
-                    os.environ["DDB_READ_CAPACITY_USED"] = "0"
-                cap_so_far = float(os.environ["DDB_READ_CAPACITY_USED"])
-                cap_so_far += results["ConsumedCapacity"].get("CapacityUnits", 0)
-                os.environ["DDB_READ_CAPACITY_USED"] = str(cap_so_far)
-            except:
-                traceback.print_exc()
         if results.get("LastEvaluatedKey", None):
             response["NextToken"] = cls._encode_nexttoken(results["LastEvaluatedKey"])
         return response
@@ -300,7 +358,7 @@ class BaseDynamoObject(dict):
     @classmethod
     def TABLE(cls):
         if not cls._TABLE_CACHE:
-            cls._TABLE_CACHE = boto3.resource('dynamodb').Table(cls.TABLE_NAME())
+            cls._TABLE_CACHE = SamTable(boto3.resource('dynamodb').Table(cls.TABLE_NAME()))
         return cls._TABLE_CACHE
 
     @classmethod
