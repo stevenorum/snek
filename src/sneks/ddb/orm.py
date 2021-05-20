@@ -265,7 +265,11 @@ class BaseDynamoObject(dict):
     def _autopaginate_search(func, **kwargs):
         # Almost certainly a better way to have these share this code,
         # but it'd take literally **minutes** to figure it out and ain't nobody got time for that.
-        max_results = kwargs.get("MaxResults", -1)
+        max_results = -1
+        if "MaxResults" in kwargs:
+            max_results = kwargs.get("MaxResults", max_results)
+        elif "Limit" in kwargs:
+            max_results = kwargs.get("Limit", max_results)
         item_count = 0
         finished = False
         shuffle_pages = kwargs.get("ShufflePages", False)
