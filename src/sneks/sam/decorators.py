@@ -5,7 +5,7 @@ from sneks import snekjson as json
 from functools import update_wrapper
 from sneks.sam import ui_stuff, response_core
 from sneks import snekjson
-from sneks.sam.exceptions import HTTP404
+from sneks.sam.exceptions import HTTP400, HTTP404, HTTP500
 
 returns_html = ui_stuff.loader_for
 
@@ -49,6 +49,28 @@ def returns_text(func):
         return response_core.make_response(body=str(response), headers = {"Content-Type": "text/plain"})
     update_wrapper(newfunc, func)
     return newfunc
+
+def io_types(input_type=None, output_type=None):
+    def midfunc(func):
+        def newfunc(event, *args, **kwargs):
+            if input_type:
+                if event["httpMethod"] == "POST" and event.get("body"):
+                    kwargs["request_object"] = input_type.from_json(event["body"])
+                else:
+                    HTTP400.throw()
+            response = func(event, *args, **kwargs)
+            print(response)
+            if output_type:
+                if isinstance(response, output_type):
+                    response = response.to_json()
+                else:
+                    HTTP500.throw()
+            if isinstance(response, str):
+                return response_core.make_response(body=response, headers = {"Content-Type": "application/json"})
+            return response
+        update_wrapper(newfunc, func)
+        return newfunc
+    return midfunc
 
 def log_function(func):
     def newfunc(*args, **kwargs):

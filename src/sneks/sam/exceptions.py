@@ -39,6 +39,10 @@ class HTTP401(HTTPException):
     CODE = 401
     BODY = "No ticket."
 
+class HTTP402(HTTPException):
+    CODE = 402
+    BODY = "Pay up."
+
 class HTTP403(HTTPException):
     CODE = 403
     BODY = "I can't let you do that, Dave."
